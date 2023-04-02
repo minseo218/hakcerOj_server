@@ -1,0 +1,93 @@
+# 서버 설정 정보
+OpenJDK version 11.0.18
+Apache2 
+Tomcat version 9 
+git version 2.25.1
+웹 외부접속 가능 IP 219.254.205.6:8800
+
+
+# JAVA 설치 및 설정 
+sudo apt update
+sudo apt install default-jdk   // JAVA 설치
+
+which javac // JAVA 설치 위치
+ll /usr/bin/javac // 실제 경로 찾기
+ll /etc/alternatives/javac
+ll /usr/lib/jvm/java-11-openjdk-amd64/bin/javac
+    /usr/lib/jvm/java-11-openjdk-amd64/bin/javac* // 실제 설치 경로
+
+
+sudo vi /etc/profile
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64  // 마지막 줄에 추가 (JAVA 환경변수 설정)
+
+source /etc/profile // 수정한 파일 적용
+echo $JAVA_HOME  // 환경변수 세팅 확인
+    /usr/lib/jvm/java-11-openjdk-amd64
+
+
+# Apache 설치
+sudo apt update     
+sudo apt install apache2
+sudo service apache2 start
+service apache2 status
+sudo service apache2 restart
+sudo service apache2 stop
+
+인터넷 창에서 localhost로 확인 필요
+    apache2 Ubuntu Default page가 나온다면 정상적으로 실행된 것
+
+
+# Tomcat 설치
+sudo apt update
+sudo apt install tomcat9
+sudo service tomcat9 start
+service tomcat9 status
+sudo service tomcat9 restart
+sudo service tomcat9 stop
+
+# Apache-Tomcat 연동
+sudo apt update
+sudo apt install libapache2-mod-jk
+sudo vi /etc/libapache2-mod-jk/workers.properties
+    workers.tomcat_home=/usr/share/tomcat8 -> tomcat9으로 변경
+    workers.java_home=/usr/lib/jvm/default-java -> $JAVA_HOME
+
+
+# git 설치
+sudo apt-get install git
+sudo apt install git
+
+# mysql 설치 및 설정
+sudo apt-get install mysql-server
+mysql -u root -p
+sudo netstat -tap |grep mysql //확인차
+mysql -u test -p -h 219.254.205.6 // 연결 실패
+mysql> create database test;
+mysql> create user user@'%'identified by 'hacker1234';
+mysql> grant all privileges on *.* To user@'%' identified by hacker1234;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'identified by hacker1234' at line 1
+참고 : https://javagwanjin.tistory.com/entry/MYSQL-유저만들기
+mysql> grant all privileges on *.* to user@'%';
+mysql> flush privileges;
+mysql -u user -p -h 127.0.0.1 // 연결 됨 (ip와 username 문제였을지도 ..)
+
+# 톰캣 외부접속 포트 변경
+cd /etc/tomcat9/server.xml
+vi server.xml
+    <Connector port="8080" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               redirectPort="8443"/>
+    // 변경 후 
+    <Connector port="8800" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               redirectPort="8443"
+                address="0.0.0.0" />
+
+219.254.205.6:8800 -> 외부 접속 가능
+
+
+# mysql connector를 이용한 연동
+wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-j-8.0.32.tar.gz
+tar -xzf mysql-connector-j-8.0.32.tar.gz
+cd mysql-connector-java.jar /usr/local/lib
+systemctl restart tomcat
