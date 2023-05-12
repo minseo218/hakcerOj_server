@@ -59,16 +59,16 @@ sudo apt install git
 
 # mysql 설치 및 설정
 sudo apt-get install mysql-server
-mysql -u root -p
+mysql -u root -p // 
 sudo netstat -tap |grep mysql //확인차
 mysql -u test -p -h 219.254.205.6 // 연결 실패
 mysql> create database test;
-mysql> create user user@'%'identified by 'hacker1234';
+mysql> create user user@'%'identified by 'hacker1234'; //데이터베이스에 새로운 사용자 생성
 mysql> grant all privileges on *.* To user@'%' identified by hacker1234;
 ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'identified by hacker1234' at line 1
 참고 : https://javagwanjin.tistory.com/entry/MYSQL-유저만들기
-mysql> grant all privileges on *.* to user@'%';
-mysql> flush privileges;
+mysql> grant all privileges on *.* to user@'%'; // 사용자에게 모든 권한 부여
+mysql> flush privileges; // 권한 설정 다시 로드
 mysql -u user -p -h 127.0.0.1 // 연결 됨 (ip와 username 문제였을지도 ..)
 
 # 톰캣 외부접속 포트 변경
@@ -91,3 +91,45 @@ wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-j-8.0.32.ta
 tar -xzf mysql-connector-j-8.0.32.tar.gz
 cd mysql-connector-java.jar /usr/local/lib
 systemctl restart tomcat
+
+
+# mysql 실행하려는데 오류..
+// 첫번째 오류
+root@hackeroj-Server:/usr/bin# mysql -u root -p
+mysql: [ERROR] Found option without preceding group in config file /etc/mysql/my.cnf at line 22.
+// 첫번째 오류 해결방법
+vi my.cnf에서 22번 줄을 bind-address = 127.0.0.1 앞 줄에 [mysqld]로 그룹추가
+// 두번째 오류 
+root@hackeroj-Server:/etc/mysql# mysql -u root -p
+Enter password: 
+ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/var/run/mysqld/mysqld.sock' (2)
+// 두번째 오류 해결방법
+root@hackeroj-Server:/etc/mysql# service mysql status  // 상태 확인했더니 failed 상태
+root@hackeroj-Server:/etc/mysql# sudo service mysql start // start 시켜줌
+root@hackeroj-Server:/etc/mysql# service mysql status // active로 바뀜
+
+# mysql 사용자 생성되었던 것 다시 확인
+root@hackeroj-Server:~# mysql -u user -p -h 127.0.0.1
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 11
+Server version: 8.0.32-0ubuntu0.20.04.2 (Ubuntu)
+
+Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> 
+// 굳 ~ 잘돼용~
+
+
+# mysql 외부 접속 허용
+root@hackeroj-Server:~# vi /etc/mysql/my.cnf
+bind-address = 127.0.0.1 -> 0.0.0.0으로 변경 // 모든 ip주소 허용
+
+
+
